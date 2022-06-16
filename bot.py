@@ -54,7 +54,7 @@ async def _help(ctx, command=''):
     embed.add_field(name='f!saved', value='Gets the link to see your saved fumos.', inline=False)
     embed.add_field(name='f!vote', value='Make a vote for your favorite fumo.\n__Example:__ **f!vote reimu**', inline=False)
     embed.add_field(name='f!seeVotes', value='Check the current fumo vote tally.', inline=False)
-    embed.add_field(name='f!fumoGIF', value='Get a random fumo GIF!\n__Example:__ **f!fumoGIF tewi** (can also leave blank)\n', inline=False)
+    embed.add_field(name='f!gif', value='Get a random fumo GIF!\n__Example:__ **f!gif tewi** (can also leave blank)\n', inline=False)
 
     await ctx.send(embed=embed)
 
@@ -100,7 +100,7 @@ async def seeVotes(ctx):
     await ctx.send(embed=embed)
 
 @bot.command()
-async def fumoGIF(ctx, fumo=''):
+async def gif(ctx, fumo=''):
     if fumo != '':
         fumo = fumoModule.getFumoKey(fumo)
         if fumo == '':
