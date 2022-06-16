@@ -28,6 +28,7 @@ intents.members = True
 
 
 bot = commands.Bot(command_prefix='f!', intents=intents)
+bot.remove_command('help')
 
 @bot.event
 async def on_ready():
@@ -39,6 +40,18 @@ async def on_ready():
         f'{bot.user} is connected to the following guild:\n'
         f'{guild.name} (id: {guild.id})'
     )
+
+@bot.command(name='help')
+async def _help(ctx, command=''):
+    embed = discord.Embed(title="FumoBot Help",
+        color=discord.Color.blue())
+
+    embed.set_author(name='FumoBot',
+                    icon_url=bot.user.avatar_url)
+
+    embed.add_field(name='f!search', value='Displays a list of the given fumos on sale.\n__Example:__ **f!search koishi**')
+
+    await ctx.send(embed=embed)
 
     # members = '\n - '.join([member.name for member in guild.members])
     # print(f'Guild members:\n - {members}')
@@ -155,6 +168,8 @@ async def on_reaction_add(reaction, user):
     #     await reaction.message.channel.send('Right clicked')
     # elif reaction.emoji == '⬅️':
     #     await reaction.message.channel.send('Left clicked')
+
+
 
 
 bot.run(TOKEN)
