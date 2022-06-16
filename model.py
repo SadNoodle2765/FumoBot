@@ -55,6 +55,8 @@ def getFumoGIF(fumo):
 
     r = requests.get(f'https://tenor.googleapis.com/v2/search?q={search_term}&key={TENOR_API_KEY}&client_key=FumoBot&limit={lmt}')
 
+    banned_tags = set(['my beloved', 'sex'])
+
     tags = set(['fumo', 'touhou'])
     if fumo != '':
         tags.add(fumo)
@@ -62,6 +64,9 @@ def getFumoGIF(fumo):
     def hasAllTags(gif):
         for tag in tags:
             if tag.lower() not in gif['tags']:
+                return False
+        for tag in banned_tags:
+            if tag.lower() in gif['tags']:
                 return False
         
         return True
