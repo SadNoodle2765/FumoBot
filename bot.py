@@ -1,8 +1,9 @@
 #bot.py
+from email import message
 import os
 from re import L
 import model
-import fumo
+import fumo as fumoModule
 from math import ceil
 
 import discord
@@ -49,13 +50,53 @@ async def _help(ctx, command=''):
     embed.set_author(name='FumoBot',
                     icon_url=bot.user.avatar_url)
 
-    embed.add_field(name='f!search', value='Displays a list of the given fumos on sale.\n__Example:__ **f!search koishi**')
+    embed.add_field(name='f!search', value='Displays a list of the given fumos on sale.\n__Example:__ **f!search koishi**', inline=False)
+    embed.add_field(name='f!saved', value='Gets the link to see your saved fumos.', inline=False)
+    embed.add_field(name='f!vote', value='Make a vote for your favorite fumo.\n__Example:__ **f!vote reimu**', inline=False)
+    embed.add_field(name='f!seeVotes', value='Check the current fumo vote tally.', inline=False)
 
     await ctx.send(embed=embed)
 
     # members = '\n - '.join([member.name for member in guild.members])
     # print(f'Guild members:\n - {members}')
 
+@bot.command()
+async def saved(ctx):
+    personalURL = f'http://fumo-search.herokuapp.com/saved/?userName={ctx.author.name}'
+    await ctx.author.send(f"Your saved fumos can be viewed at:\n{personalURL}")
+
+
+@bot.command()
+async def vote(ctx, fumo=''):
+    if fumo == '':
+        await ctx.send('Please enter a fumo to vote for!', delete_after=5)
+        return
+    
+    fumo = fumoModule.getFumoKey(fumo)
+    if fumo == '':
+        await ctx.send('Invalid fumo entered.', delete_after=5)
+        return
+    
+    model.voteForFumo(str(ctx.author), fumo)
+    await ctx.send(f'{ctx.author.name} voted for {fumo}!', delete_after=5)
+
+@bot.command()
+async def seeVotes(ctx):
+    votes = model.getVotes()
+
+    embedText = ''
+    
+    for fumo, voteNum in votes:
+        embedText += f'**{fumo}**: {voteNum} votes\n'
+
+    embed = discord.Embed(title="Fumo Popularity",
+        color=discord.Color.blue())
+
+    embed.add_field(name="Votes", value=embedText)
+
+    embed.set_footer(text='Make a vote with *f!vote* !')
+
+    await ctx.send(embed=embed)
 
 # @bot.command()
 # async def reply(ctx, *, text):
@@ -65,9 +106,9 @@ async def _help(ctx, command=''):
 # async def add(ctx, n1: int, n2: int):
 #     await ctx.send(n1 + n2)
 
-# @bot.command()
-# async def whoami(ctx):
-#     await ctx.send(ctx.author)
+@bot.command()
+async def whoami(ctx):
+    await ctx.send(str(ctx.author))
 
 FUMO_MESSAGES = list()
 CACHED_FUMO_DATA = list()
@@ -109,6 +150,7 @@ async def sendEmbedFumos(embedArr, channel):
     
     for embed in embedArr:
         message = await channel.send(embed=embed)
+        await message.add_reaction('❤️')
         FUMO_MESSAGES.append(message)
 
     lastMessage = FUMO_MESSAGES[-1]
@@ -118,15 +160,18 @@ async def sendEmbedFumos(embedArr, channel):
         await lastMessage.add_reaction('➡️')
 
 @bot.command()
-async def search(ctx, fumoName):
+async def search(ctx, fumoName=''):
     global CACHED_FUMO_DATA
     global CUR_PAGE
     global LAST_PAGE
 
-    fumoKey = fumo.getFumoKey(fumoName)
+    if fumoName == '':
+        message = await ctx.send("Please enter a fumo to search for!", delete_after=5)
+        return
+
+    fumoKey = fumoModule.getFumoKey(fumoName)
     if fumoKey == '':
-        message = await ctx.send("Could not find that fumo!")
-        FUMO_MESSAGES.append(message)
+        message = await ctx.send("Could not find that fumo!", delete_after=5)
         return
 
     fumoData = model.getFumos(fumoKey)
@@ -156,20 +201,52 @@ async def editFumoList(emoji, channel):
 
 @bot.event
 async def on_reaction_add(reaction, user):
+    channel = reaction.message.channel
+
     if user.id == bot.user.id:                          # Don't do anything for reactions the bot added itself
         return
 
     if reaction.message.id not in set(msg.id for msg in FUMO_MESSAGES):        # Don't do anything for reactions that weren't on the message the bot sent
         return
 
-    await editFumoList(reaction.emoji, reaction.message.channel)
+    if reaction.emoji == '➡️' or reaction.emoji == '⬅️':
+        await editFumoList(reaction.emoji, channel)
+
+    if reaction.emoji == '❤️':
+        buyLink = reaction.message.embeds[0].url
+        userName = user.name
+        
+        addedNew = model.toggleSaveFumo(userName, buyLink, add=True)
+
+        await channel.send(content=f'Fumo added to saved!\nHead to https://fumo-search.herokuapp.com/saved/?userName={user.name} to see your saved fumos.', delete_after=6)
+        print("Fumo successfully added!")
+
     
     # if reaction.emoji == '➡️':
     #     await reaction.message.channel.send('Right clicked')
     # elif reaction.emoji == '⬅️':
     #     await reaction.message.channel.send('Left clicked')
 
+@bot.event
+async def on_reaction_remove(reaction, user):
+    channel = reaction.message.channel
 
+    if user.id == bot.user.id:                          # Don't do anything for reactions the bot removed itself
+        return
+
+    if reaction.message.id not in set(msg.id for msg in FUMO_MESSAGES):        # Don't do anything for reactions that weren't on the message the bot sent
+        return
+
+    if reaction.emoji == '❤️':
+        buyLink = reaction.message.embeds[0].url
+        userName = user.name
+        
+        addedNew = model.toggleSaveFumo(userName, buyLink, add=False)
+
+        await channel.send(content=f'Fumo removed from saved!\nHead to https://fumo-search.herokuapp.com/saved/?userName={user.name} to see your saved fumos.', delete_after=6)
+
+
+    
 
 
 bot.run(TOKEN)
