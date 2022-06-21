@@ -8,7 +8,7 @@ from collections import Counter
 load_dotenv()
 TENOR_API_KEY = os.getenv('TENOR_API_KEY')
 
-BASE_URL_FUMO = 'https://fumo-search.herokuapp.com/api/fumo/?fumoName='
+BASE_URL_FUMO = 'https://fumo-search.herokuapp.com/api/fumo/'
 BASE_URL_SAVED_FUMOS = 'https://fumo-search.herokuapp.com/api/savedfumos/'
 BASE_URL_VOTE_FUMO = 'https://fumo-search.herokuapp.com/api/vote/'
 
