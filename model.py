@@ -16,7 +16,7 @@ BASE_URL_VOTE_FUMO = 'https://fumo-search.herokuapp.com/api/vote/'
 
 def getFumos(fumoName='', tags=set()):
     data = {'fumoName': fumoName, 'tags[]': list(tags)}
-    response = requests.get('http://localhost:3001/api/fumo', params=data)
+    response = requests.get(BASE_URL_FUMO, params=data)
     data = json.loads(response.text)
 
     data.sort(key=lambda fumo: fumo['buyoutPrice'] if fumo['buyoutPrice'] != 0 else fumo['price'])
