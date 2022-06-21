@@ -176,7 +176,7 @@ async def sendEmbedFumos(embedArr, channel):
         await lastMessage.add_reaction('➡️')
 
 @bot.command()
-async def search(ctx, fumoName=''):
+async def search(ctx, fumoName='', *tags):
     global CACHED_FUMO_DATA
     global CUR_PAGE
     global LAST_PAGE
@@ -190,7 +190,14 @@ async def search(ctx, fumoName=''):
         message = await ctx.send("Could not find that fumo!", delete_after=5)
         return
 
-    fumoData = model.getFumos(fumoKey)
+    editedTags = set()
+    for tag in tags:
+        if tag.lower() == 'deka':
+            editedTags.add('deka')
+        elif tag.lower() == 'kourindou':
+            editedTags.add('kourindou')
+
+    fumoData = model.getFumos(fumoKey, tags)
     CACHED_FUMO_DATA = fumoData
     CUR_PAGE = 1
     LAST_PAGE = ceil(len(fumoData) / 5)
